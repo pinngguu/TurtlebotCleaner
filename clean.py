@@ -11,6 +11,7 @@ x=0
 y=0
 yaw=0
 
+
 def poseCallback(pose_message):
     global x
     global y, yaw
@@ -71,7 +72,7 @@ def rotate (angular_speed_degree, relative_angle_degree, clockwise):
     velocity_message.angular.x=0
     velocity_message.angular.y=0
     velocity_message.angular.z=0
-
+    
     #get current location 
     theta0=yaw
     angular_speed=math.radians(abs(angular_speed_degree))
@@ -113,7 +114,7 @@ def go_to_goal(x_goal, y_goal):
 
     velocity_message = Twist()
     cmd_vel_topic='/turtle1/cmd_vel'
-
+    rospy.loginfo("Executing go to goal")
     while (True):
         K_linear = 0.5 
         distance = abs(math.sqrt(((x_goal-x) ** 2) + ((y_goal-y) ** 2)))
@@ -141,6 +142,7 @@ def go_to_goal(x_goal, y_goal):
 
 def setDesiredOrientation(desired_angle_radians):
     relative_angle_radians = desired_angle_radians - yaw
+    
     if relative_angle_radians < 0:
         clockwise = 1
     else:
@@ -156,18 +158,20 @@ def getDistance (x1, y1, x2, y2):
     return dist
 
 def moveGoal(goal_pose, distance_tolerance):
-    turtlesim_pose = Pose()
+    global x
+    global y, yaw
     vel_msg = Twist()
     loop_rate = rospy.Rate(100)
     E = 0.0
-    while (getDistance(turtlesim_pose.x, turtlesim_pose.y, goal_pose.x, goal_pose.y)>distance_tolerance):
+    
+    while (getDistance(x, y, goal_pose.x, goal_pose.y)>distance_tolerance):
 		#/****** Proportional Controller ******/
 		#//linear velocity in the x-axis
 		Kp=1.0
 		Ki=0.02
 		#//double v0 = 2.0;
 		#//double alpha = 0.5;
-		e = getDistance(turtlesim_pose.x, turtlesim_pose.y, goal_pose.x, goal_pose.y)
+		e = getDistance(x, y, goal_pose.x, goal_pose.y)
 		E = E+e
 		#//Kp = v0 * (exp(-alpha)*error*error)/(error*error);
 		vel_msg.linear.x = (Kp*e)
@@ -176,7 +180,7 @@ def moveGoal(goal_pose, distance_tolerance):
 		#//angular velocity in the z-axis
 		vel_msg.angular.x = 0
 		vel_msg.angular.y = 0
-		vel_msg.angular.z =4*(math.atan2(goal_pose.y-turtlesim_pose.y, goal_pose.x-turtlesim_pose.x)-turtlesim_pose.theta)
+		vel_msg.angular.z =4*(math.atan2(goal_pose.y-y, goal_pose.x-x)-yaw)
 
 		velocity_publisher.publish(vel_msg)
 
@@ -199,28 +203,40 @@ def gridClean():
  
     setDesiredOrientation(math.radians(desired_pose.theta))
  
-    move(2.0, 8.0, True)
-    rotate(math.radians(20), math.radians(90), False)
-    move(2.0, 8.0, True)
-    rotate(math.radians(20), math.radians(90), False)
-    move(2.0, 1.0, True)
-    rotate(math.radians(20), math.radians(90), False)
-    move(2.0, 8.0, True)
-    rotate(math.radians(30), math.radians(90), True)
-    move(2.0, 1.0, True)
-    rotate(math.radians(30), math.radians(90), True)
-    move(2.0, 8.0, True)
+    move(2.0, 4.5, True)
+    rotate(20, 90, False)
+    
+    move(2.0, 4.5, True)
+    rotate(20, 90, False)
+    
+    move(2.0, 1.5, True)
+    rotate(20, 90, False)
+    
+    move(2.0, 4.5, True)
+    rotate(30, 90, True)
+    
+    move(2.0, 1.5, True)
+    rotate(30, 90, True)
+    
+    move(2.0, 4.5, True)
+    rotate(30, 90, False)
+    
+    move(2.0, 1.5, True)
+    rotate(30, 90, False)
+
+    move(2.0, 4.5, True)
     pass
  
  
 def spiralClean():
     vel_msg = Twist()
-    pose_msg = Pose()
-    loop_rate = rospy.Rate(2)
-    wk = 5
+    global x
+    global y
+    loop_rate = rospy.Rate(8)
+    wk = 8
     rk = 0
  
-    while ((pose_msg.x<10) and (pose_msg.y<10)):
+    while ((x<9) and (y<9)):
         rk=rk+1
         vel_msg.linear.x =rk
         vel_msg.linear.y =0
@@ -230,6 +246,7 @@ def spiralClean():
         vel_msg.angular.z = wk
         velocity_publisher.publish(vel_msg)
         loop_rate.sleep()
+        print 'x=',x,'  y=',y
  
     vel_msg.linear.x = 0
     vel_msg.angular.z = 0
@@ -240,7 +257,7 @@ def spiralClean():
 if __name__ == '__main__':
     try:
         
-        rospy.init_node('turtlesim_motion_pose', anonymous=True)
+        rospy.init_node('cleaner_node')
 
         #declare velocity publisher
         cmd_vel_topic='/turtle1/cmd_vel'
