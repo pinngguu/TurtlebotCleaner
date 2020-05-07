@@ -1,4 +1,4 @@
 <launch>
     <node name="turtlesim_node" pkg="turtlesim" type="turtlesim_node" output="screen"/>
-    <node name="turtlesim_motion_pose" pkg="ros_essentials_cpp" type="turtlesim_motion_pose_16442_1588669614305" output="screen"/>
+    <node name="turtlesim_motion_pose" pkg="ros_essentials_cpp" type="turtlesim_motion_pose" output="screen"/>
 </launch>
